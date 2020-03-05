@@ -9,21 +9,6 @@ use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
-/**
- * User model
- *
- * @property integer $id
- * @property string $username
- * @property string $password_hash
- * @property string $password_reset_token
- * @property string $email
- * @property string $auth_key
- * @property integer $status
- * @property integer $created_at
- * @property integer $updated_at
- * @property string $password write-only password
- * @property string $name
- */
 class User extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
@@ -34,17 +19,11 @@ class User extends ActiveRecord implements IdentityInterface
 
     const DATE_FORMAT = 'd.m.Y';
 
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName()
     {
         return '{{%user}}';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function behaviors()
     {
         return [
@@ -52,9 +31,6 @@ class User extends ActiveRecord implements IdentityInterface
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
@@ -68,77 +44,41 @@ class User extends ActiveRecord implements IdentityInterface
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function findIdentity($id)
     {
         return static::findOne(['id' => $id, 'status' => self::STATUS_ACTIVE]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function findIdentityByAccessToken($token, $type = null)
     {
         throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getId()
     {
         return $this->getPrimaryKey();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getAuthKey()
     {
         return $this->auth_key;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function validateAuthKey($authKey)
     {
         return $this->getAuthKey() === $authKey;
     }
 
-    /**
-     * Finds user by username
-     *
-     * @param string $username
-     *
-     * @return static|null
-     */
     public static function findByUsername($username)
     {
         return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
     }
 
-    /**
-     * Finds user by email
-     *
-     * @param string $email
-     *
-     * @return static|null
-     */
     public static function findByEmail($email)
     {
         return static::findOne(['email' => $email, 'status' => self::STATUS_ACTIVE]);
     }
 
-    /**
-     * Finds user by password reset token
-     *
-     * @param string $token password reset token
-     *
-     * @return static|null
-     */
     public static function findByPasswordResetToken($token)
     {
         if (!static::isPasswordResetTokenValid($token)) {
@@ -151,13 +91,6 @@ class User extends ActiveRecord implements IdentityInterface
         ]);
     }
 
-    /**
-     * Finds out if password reset token is valid
-     *
-     * @param string $token password reset token
-     *
-     * @return bool
-     */
     public static function isPasswordResetTokenValid($token)
     {
         if (empty($token)) {
@@ -178,55 +111,31 @@ class User extends ActiveRecord implements IdentityInterface
         return $user;
     }
 
-    /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     *
-     * @return bool if password provided is valid for current user
-     */
     public function validatePassword($password)
     {
         return Yii::$app->security->validatePassword($password, $this->password_hash);
     }
 
-    /**
-     * Generates password hash from password and sets it to the model
-     *
-     * @param string $password
-     */
     public function setPassword($password)
     {
         $this->password_hash = Yii::$app->security->generatePasswordHash($password);
     }
 
-    /**
-     * Generates "remember me" authentication key
-     */
     public function generateAuthKey()
     {
         $this->auth_key = Yii::$app->security->generateRandomString();
     }
 
-    /**
-     * Generates new password reset token
-     */
     public function generatePasswordResetToken()
     {
         $this->password_reset_token = Yii::$app->security->generateRandomString() . '_' . time();
     }
 
-    /**
-     * Removes password reset token
-     */
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
@@ -244,11 +153,6 @@ class User extends ActiveRecord implements IdentityInterface
         return parent::beforeSave($insert);
     }
 
-    /**
-     * Sends an email with a link, for confirming the registration.
-     *
-     * @return bool whether the email was send
-     */
     public function sendConfirmationEmail($user)
     {
         $link = Yii::$app->urlManager->createAbsoluteUrl(['site/confirm', 'id' => $user->id, 'auth_key' => $user->auth_key]);
@@ -265,106 +169,216 @@ class User extends ActiveRecord implements IdentityInterface
             ->send();
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
+    public function getCreatedProjects()
+{
+    $this->hasMany(Project::className(), ['createdby_id' => 'id']);
+}
+
+    public function getUpdatedProjects()
+    {
+        $this->hasMany(Project::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTeams()
+    {
+        $this->hasMany(Team::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTeams()
+    {
+        $this->hasMany(Team::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTeamMembers()
+    {
+        $this->hasMany(TeamMember::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTeamMembers()
+    {
+        $this->hasMany(TeamMember::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedServerStatuses()
+    {
+        $this->hasMany(ServerStatus::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedServerStatuses()
+    {
+        $this->hasMany(ServerStatus::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedProtocols()
+    {
+        $this->hasMany(Protocol::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedProtocols()
+    {
+        $this->hasMany(Protocol::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedServers()
+    {
+        $this->hasMany(Server::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedServers()
+    {
+        $this->hasMany(Server::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedResponseStatuses()
+    {
+        $this->hasMany(ResponseStatus::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedResponseStatuses()
+    {
+        $this->hasMany(ResponseStatus::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedHttpMethods()
+    {
+        $this->hasMany(HttpMethod::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedHttpMethods()
+    {
+        $this->hasMany(HttpMethod::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTests()
+    {
+        $this->hasMany(Test::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTests()
+    {
+        $this->hasMany(Test::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedJobs()
+    {
+        $this->hasMany(Job::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedJobs()
+    {
+        $this->hasMany(Job::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTestRequests()
+    {
+        $this->hasMany(TestRequest::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTestRequests()
+    {
+        $this->hasMany(TestRequest::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTestResponses()
+    {
+        $this->hasMany(TestResponse::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTestResponses()
+    {
+        $this->hasMany(TestResponse::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTestRequestHeaders()
+    {
+        $this->hasMany(TestRequestHeader::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTestRequestHeaders()
+    {
+        $this->hasMany(TestRequestHeader::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getCreatedTestResponseHeaders()
+    {
+        $this->hasMany(TestResponseHeader::className(), ['createdby_id' => 'id']);
+    }
+
+    public function getUpdatedTestResponseHeaders()
+    {
+        $this->hasMany(TestResponseHeader::className(), ['updatedby_id' => 'id']);
+    }
+
+    public function getProjects()
+    {
+        return $this->hasMany(Project::className(), ['user_id' => 'id']);
+    }
+
+    public function getTeamMembers()
+    {
+        return $this->hasMany(TeamMember::className(), ['user_id' => 'id']);
+    }
+
     public function getMoqups()
     {
         return $this->hasMany(Moqup::className(), ['user_id' => 'id']);
     }
 
-    /**
-     * @return integer The number of moqups of the user
-     */
     public function getMoqupsCount()
     {
         return count($this->moqups);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getIssues()
     {
         return $this->hasMany(Issue::className(), ['user_id' => 'id']);
     }
 
-    /**
-     * @return integer The number of issues of the user
-     */
     public function getIssuesCount()
     {
         return count($this->issues);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getSupportGroup()
     {
         return $this->hasMany(SupportGroup::className(), ['user_id' => 'id']);
     }
 
-    /**
-     * @return integer The number of support group of the user
-     */
     public function getSupportGroupCount()
     {
         return count($this->supportGroup);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getSupportGroupMember()
     {
         return $this->hasMany(SupportGroupMember::className(), ['support_group_id' => 'id'])->viaTable('support_group', ['user_id' => 'id']);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getSupportGroupCommand()
     {
         return $this->hasMany(SupportGroupCommand::className(), ['support_group_id' => 'id'])->viaTable('support_group', ['user_id' => 'id']);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getSupportGroupBot()
     {
         return $this->hasMany(SupportGroupBot::className(), ['support_group_id' => 'id'])->viaTable('support_group', ['user_id' => 'id']);
     }
 
-    /**
-     * @return integer The number of members of the support group
-     */
     public function getSupportGroupMemberCount()
     {
         return count($this->supportGroupMember);
     }
 
-    /**
-     * @return integer The number of bots of the support group
-     */
     public function getBotsCount()
     {
         return count($this->supportGroupBot);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getFollowedMoqups()
     {
         return $this->hasMany(Moqup::className(), ['id' => 'moqup_id'])->viaTable('user_moqup_follow', ['user_id' => 'id']);
     }
 
-    /**
-     * Get a list of id of the moqups beign followed by the user
-     * @return array the list of moqups id
-     */
     public function getFollowedMoqupsId()
     {
         $ids = [];
@@ -376,9 +390,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $ids;
     }
 
-    /**
-     * @return integer The max ammount of moqups the user can have
-     */
     public function getMaxMoqupsNumber()
     {
         $setting = Setting::findOne(['key' => 'moqup_quantity_value_per_one_rating']);
@@ -387,9 +398,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $maxMoqup * $this->rating;
     }
 
-    /**
-     * @return integer The max ammount of issues the user can have
-     */
     public function getMaxIssuesNumber()
     {
         $setting = Setting::findOne(['key' => 'issue_quantity_value_per_one_rating']);
@@ -398,9 +406,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $maxIssue * $this->rating;
     }
 
-    /**
-     * @return integer The max ammount of support groups the user can have
-     */
     public function getMaxSupportGroup()
     {
         $setting = Setting::findOne(['key' => 'support_group_quantity_value_per_one_rating']);
@@ -409,9 +414,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $settingQty * $this->rating;
     }
 
-    /**
-     * @return integer The max ammount of support group members the user can have
-     */
     public function getMaxSupportGroupMember()
     {
         $setting = Setting::findOne(['key' => 'support_group_member_quantity_value_per_one_rating']);
@@ -420,9 +422,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $settingQty * $this->rating;
     }
 
-    /**
-     * @return integer The max amount of bots the user can have
-     */
     public function getMaxBots()
     {
         $setting = Setting::findOne(['key' => 'support_group_bot_quantity_value_per_one_rating']);
@@ -431,9 +430,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $settingQty * $this->rating;
     }
 
-    /**
-     * @return boolean If the user reach its moqups limit
-     */
     public function getReachMaxMoqupsNumber()
     {
         return $this->moqupsCount >= $this->maxMoqupsNumber;
@@ -459,9 +455,6 @@ class User extends ActiveRecord implements IdentityInterface
         return Converter::byteToMega($size);
     }
 
-    /**
-     * @return integer The max size that the user can have between moqups
-     */
     public function getMaxMoqupsSize()
     {
         $maxLength = $this->maxMoqupsHtmlSize + $this->maxMoqupsCssSize;
@@ -481,25 +474,16 @@ class User extends ActiveRecord implements IdentityInterface
         return ($setting != null) ? $setting->value : 1;
     }
 
-    /**
-     * @return boolean If the user reach the max size
-     */
     public function getReachMaxMoqupsSize()
     {
         return $this->totalMoqupsSize >= $this->maxMoqupsSize;
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getRatings()
     {
         return $this->hasMany(Rating::className(), ['user_id' => 'id']);
     }
 
-    /**
-     * @return integer The current rating of the user
-     */
     public function getRating()
     {
         $balance = Rating::find()->select(['balance' => 'sum(amount)'])->where(['user_id' => $this->id])->groupBy('user_id')->scalar();
@@ -507,19 +491,12 @@ class User extends ActiveRecord implements IdentityInterface
         return ($balance != null) ? $balance : 0;
     }
 
-    /**
-     * @param bool $format whether to return formatted percent value or not
-     * @return mixed The number in percentage
-     */
     public function getOverallRatingPercent($format = true)
     {
         $totalRating = Rating::getTotalRating();
         return Converter::percentage($this->rating, $totalRating, $format);
     }
 
-    /**
-     * @return integer The active rating of the user
-     */
     public function getActiveRating()
     {
         $setting = Setting::findOne(['key' => 'days_count_to_calculate_active_rating']);
@@ -533,15 +510,6 @@ class User extends ActiveRecord implements IdentityInterface
         return ($balance != null) ? $balance : 0;
     }
 
-    /**
-     * Add user rating
-     *
-     * @param int $ratingType integer value for rating type constants defined in Rating model
-     * @param int $ratingAmount rating amount to be added
-     * @param bool $existMultiple, false: given $ratingType can exist only once for a user
-     *
-     * @return bool true|false
-     */
     public function addRating($ratingType = Rating::CONFIRM_EMAIL, $ratingAmount = 1, $existMultiple = true)
     {
         $id = $this->id;
@@ -571,9 +539,6 @@ class User extends ActiveRecord implements IdentityInterface
         return $commit;
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getReferrals(int $level = 1)
     {
         return User::find()->where([
@@ -582,17 +547,11 @@ class User extends ActiveRecord implements IdentityInterface
         ]);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getReferrer()
     {
         return $this->hasOne(User::class, ['id' => 'referrer_id']);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getContact()
     {
         return $this->hasOne(Contact::class, ['link_user_id' => 'id'])
@@ -602,5 +561,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function getDisplayName()
     {
         return $this->contact->getContactName();
+    }
+
+    public function getProject()
+    {
+        return $this->hasOne(Project::className(), ['id' => 'projectid']);
     }
 }
