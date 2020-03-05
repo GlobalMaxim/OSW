@@ -1,0 +1,3 @@
+#nginx logs
+opensourcewebsite.local.access.log
+opensourcewebsite.local.error.log
